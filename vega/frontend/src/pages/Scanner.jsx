@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Search, Filter, TrendingUp, TrendingDown, Clock } from 'lucide-react';
 import useVegaStore from '../store/useVegaStore';
 
@@ -15,7 +15,7 @@ const Scanner = () => {
   useEffect(() => {
     const fetchSignals = async () => {
       try {
-        const { data } = await axios.get('/api/signals');
+        const { data } = await api.get('/signals');
         setSignals(data);
       } catch (e) {
         console.error('Failed to fetch signals', e);

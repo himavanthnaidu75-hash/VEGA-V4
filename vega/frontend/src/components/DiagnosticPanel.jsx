@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, XCircle, AlertCircle, Play, Loader2 } from 'lucide-react';
 
@@ -11,7 +11,7 @@ const DiagnosticPanel = () => {
     setRunning(true);
     setResults([]);
     try {
-      const { data } = await axios.get('/api/diagnostics/run');
+      const { data } = await api.get('/diagnostics/run');
       // Simulate sequential animation
       for (const step of data.steps) {
         setResults(prev => [...prev, step]);

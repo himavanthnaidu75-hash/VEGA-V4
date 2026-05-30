@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import useVegaStore from '../store/useVegaStore';
 import { createChart } from 'lightweight-charts';
 import { Activity, Briefcase, Zap, ShieldAlert, TrendingUp } from 'lucide-react';
-import axios from 'axios';
+import api from '../api';
 import SignalCard from '../components/SignalCard';
 
 const Dashboard = () => {
@@ -14,7 +14,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchPerf = async () => {
       try {
-        const res = await axios.get('/api/performance');
+        const res = await api.get('/performance');
         setPerfData(res.data);
       } catch (e) {
         console.error("Performance sync failure", e);

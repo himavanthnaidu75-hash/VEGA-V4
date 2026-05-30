@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import useVegaStore from '../store/useVegaStore';
 
 const KillSwitch = () => {
@@ -30,7 +30,7 @@ const KillSwitch = () => {
     setProgress(0);
     try {
       const token = localStorage.getItem('vega_kill_token') || 'change_this_before_going_live';
-      await axios.post('/api/kill', { token });
+      await api.post('/kill', { token });
       console.log('Kill signal sent successfully');
     } catch (err) {
       console.error('Kill signal failed:', err);

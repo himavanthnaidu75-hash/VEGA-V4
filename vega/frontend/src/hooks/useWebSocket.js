@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import useVegaStore from '../store/useVegaStore';
+import config from '../config';
 
 const useWebSocket = () => {
   const ws = useRef(null);
@@ -12,10 +13,7 @@ const useWebSocket = () => {
   } = useVegaStore();
 
   const connect = useCallback(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Handle both dev and prod environments
-    const host = window.location.hostname === 'localhost' ? 'localhost:8000' : window.location.host;
-    const url = `${protocol}//${host}/ws`;
+    const url = config.WS_URL;
 
     console.log(`Connecting to ${url}...`);
     ws.current = new WebSocket(url);
@@ -42,7 +40,6 @@ const useWebSocket = () => {
           addSignal(message.data);
           break;
         case 'ticker_update':
-          // message.data expected to be {symbol: price} or [{symbol, price}]
           updateTickers(message.data);
           break;
         case 'kill_event':

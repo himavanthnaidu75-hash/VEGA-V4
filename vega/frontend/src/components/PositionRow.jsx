@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { XCircle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
-import axios from 'axios';
+import api from '../api';
 
 const PositionRow = ({ pos }) => {
   const [pulse, setPulse] = useState(false);
@@ -15,7 +15,7 @@ const PositionRow = ({ pos }) => {
 
   const closePosition = async () => {
     try {
-      await axios.post('/api/orders/close', { symbol: pos.symbol });
+      await api.post('/orders/close', { symbol: pos.symbol });
     } catch (e) {
       console.error('Failed to close position', e);
     }

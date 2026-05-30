@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import Terminal from './pages/Terminal';
@@ -8,6 +8,7 @@ import Analytics from './pages/Analytics';
 import TopBar from './components/TopBar';
 import MarketTicker from './components/MarketTicker';
 import ThreeBackground from './components/ThreeBackground';
+import SetupWizard from './components/SetupWizard';
 import useWebSocket from './hooks/useWebSocket';
 import useVegaStore from './store/useVegaStore';
 
@@ -28,7 +29,7 @@ const Layout = ({ children }) => {
 
       {isKilled && (
         <div className="fixed inset-0 z-[9999] bg-kill flex items-center justify-center animate-pulse">
-          <h1 className="text-9xl font-black font-syne text-white tracking-tighter italic">SYSTEM KILLED</h1>
+          <h1 className="text-9xl font-black font-syne text-white tracking-tighter italic uppercase">System Killed</h1>
         </div>
       )}
     </div>
@@ -36,9 +37,9 @@ const Layout = ({ children }) => {
 };
 
 function App() {
-  useWebSocket(); // Initialize global socket connection
+  useWebSocket();
+  const [setupComplete, setSetupComplete] = useState(localStorage.getItem('vega_setup_complete') === 'true');
 
-  // Load theme from localStorage on boot
   useEffect(() => {
     const primary = localStorage.getItem('vega_primary_color');
     const bg = localStorage.getItem('vega_bg_color');
@@ -48,6 +49,7 @@ function App() {
 
   return (
     <Router>
+      {!setupComplete && <SetupWizard onComplete={() => setSetupComplete(true)} />}
       <Layout>
         <Routes>
           <Route path="/" element={<Login />} />

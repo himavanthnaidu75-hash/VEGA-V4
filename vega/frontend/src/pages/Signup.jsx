@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../api';
 import ThreeBackground from '../components/ThreeBackground';
 import { Mail, Lock, ShieldCheck, AlertCircle } from 'lucide-react';
 
@@ -16,7 +16,7 @@ const Signup = () => {
     setLoading(true);
     setError('');
     try {
-      await axios.post('/auth/signup', formData);
+      await api.post('/auth/signup', formData);
       navigate('/onboarding');
     } catch (err) {
       setError(err.response?.data?.detail || 'Handshake failed. Check credentials.');
