@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #F7F7F5;
+  --color-secondary: #F5C518;
+  --color-ink: #0A0F2C;
+  --color-success: #00B37E;
+  --color-danger: #E83535;
+  --color-kill: #CC2200;
+  --color-surface: #FFFFFF;
+  --color-border: #E8E8E4;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-primary);
+  font-family: 'Inter', sans-serif;
+}
