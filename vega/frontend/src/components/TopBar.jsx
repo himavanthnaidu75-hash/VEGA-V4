@@ -10,7 +10,7 @@ const TopBar = () => {
       <div className="flex items-center gap-8">
         <div className="flex flex-col">
           <span className="text-secondary font-black text-2xl tracking-tighter leading-none">VEGA</span>
-          <span className="text-[8px] text-primary/40 tracking-[0.3em] font-bold uppercase">v4.0 Final</span>
+          <span className="text-[8px] text-primary/40 tracking-[0.3em] font-bold uppercase">v2.0</span>
         </div>
 
         <div className="h-8 w-[1px] bg-white/10"></div>

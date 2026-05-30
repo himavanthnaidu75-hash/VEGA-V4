@@ -2,16 +2,19 @@ import React from 'react';
 import useVegaStore from '../store/useVegaStore';
 
 const MarketTicker = () => {
-  const { logs } = useVegaStore(); // Mock ticker items using logs or constants
-  const items = [
+  const { tickers } = useVegaStore();
+
+  const liveItems = Object.entries(tickers).map(([s, p]) => ({
+    s, p: p.toLocaleString('en-IN'), c: '+0.0%'
+  }));
+
+  const staticItems = [
     { s: 'NIFTY 50', p: '22,453.20', c: '+1.2%' },
     { s: 'RELIANCE', p: '2,945.30', c: '+0.8%' },
     { s: 'HDFCBANK', p: '1,452.10', c: '-0.4%' },
-    { s: 'TCS', p: '3,892.45', c: '+2.1%' },
-    { s: 'INFY', p: '1,623.00', c: '+0.2%' },
-    { s: 'ICICIBANK', p: '1,012.35', c: '+1.1%' },
-    { s: 'SBIN', p: '752.40', c: '-1.2%' },
   ];
+
+  const items = liveItems.length > 0 ? liveItems : staticItems;
 
   return (
     <div className="fixed top-16 left-0 w-full h-8 bg-black/40 backdrop-blur-md border-b border-white/5 z-40 flex items-center overflow-hidden">
