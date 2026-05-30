@@ -8,6 +8,8 @@ const useVegaStore = create((set) => ({
   signals: [],
   tickers: {},
   logs: [],
+  killToken: localStorage.getItem('vega_kill_token') || '',
+
   setStatus: (status) => set({ status }),
   setPnl: (pnl, pnlPct) => set({ pnl, pnlPct }),
   setPositions: (positions) => set({ positions }),
@@ -15,6 +17,10 @@ const useVegaStore = create((set) => ({
   updateTicker: (symbol, price) => set((state) => ({
     tickers: { ...state.tickers, [symbol]: price }
   })),
+  setKillToken: (token) => {
+    localStorage.setItem('vega_kill_token', token);
+    set({ killToken: token });
+  },
   addLog: (log) => set((state) => ({ logs: [log, ...state.logs].slice(0, 100) })),
 }));
 

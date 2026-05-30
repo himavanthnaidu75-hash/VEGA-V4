@@ -12,13 +12,10 @@ from vega.backend.utils.logger import logger
 
 class TradingOrchestrator:
     def __init__(self, broker, ws_manager=None):
-        self.broker = broker
-        self.ws_manager = ws_manager
-        self.scanner = Scanner()
-        self.risk_manager = RiskManager()
+        self.broker, self.ws_manager = broker, ws_manager
+        self.scanner, self.risk_manager = Scanner(), RiskManager()
         self.order_manager = OrderManager(broker)
-        self.strategies = []
-        self.is_running = False
+        self.strategies, self.is_running = [], False
         self.current_mode = settings.DEFAULT_TRADE_MODE
 
     def set_strategies(self, s): self.strategies = s
@@ -34,8 +31,7 @@ class TradingOrchestrator:
             await self._broadcast({"type": "new_signal", "data": sig})
             with Session(db_engine) as sess:
                 open_pos = sess.exec(select(Trade).where(Trade.status == "OPEN")).all()
-                pnl = sum(t.pnl or 0.0 for t in open_pos)
-                valid, reason = self.risk_manager.validate_trade(sig, pnl, len(open_pos))
+                valid, reason = self.risk_manager.validate_trade(sig, sum(t.pnl or 0 for t in open_pos), len(open_pos))
                 if valid:
                     qty = self.risk_manager.calculate_position_size(sig['entry'], sig['sl'])
                     res = self.broker.place_order(sig['symbol'], qty, sig['side'], "MARKET", sig['entry'], "MIS")
@@ -46,23 +42,24 @@ class TradingOrchestrator:
                         await notifier.send(f"Trade: {sig['side']} {sig['symbol']} @ {sig['entry']}")
 
     async def manage_positions(self):
-        while self.is_running:
+        while True: # Position management always runs until process kill
             with Session(db_engine) as sess:
                 for t in sess.exec(select(Trade).where(Trade.status == "OPEN")).all():
                     cp = self.broker.get_live_price(t.symbol)
-                    # Update Trailing SL
                     new_sl = await self.order_manager.update_trailing_sl(t, cp)
                     if new_sl and new_sl != t.sl:
-                        dt = sess.get(Trade, t.id)
-                        dt.sl = new_sl; sess.add(dt); sess.commit()
-                        t.sl = new_sl
-
+                        dt = sess.get(Trade, t.id); dt.sl = new_sl; sess.add(dt); sess.commit(); t.sl = new_sl
                     if (t.side == "BUY" and (cp <= t.sl or cp >= t.tp)) or (t.side == "SELL" and (cp >= t.sl or cp <= t.tp)):
                         res = self.broker.place_order(t.symbol, t.qty, "SELL" if t.side == "BUY" else "BUY", "MARKET", cp, "MIS")
                         if res.success:
-                            dt = sess.get(Trade, t.id)
-                            dt.status, dt.exit_price, dt.exit_time = "CLOSED", cp, datetime.utcnow()
+                            dt = sess.get(Trade, t.id); dt.status, dt.exit_price, dt.exit_time = "CLOSED", cp, datetime.utcnow()
                             dt.pnl = (cp - t.entry_price) * t.qty if t.side == "BUY" else (t.entry_price - cp) * t.qty
                             sess.add(dt); sess.commit()
                             await self._broadcast({"type": "order_update", "data": vars(dt)})
             await asyncio.sleep(10)
+
+    async def pre_market_prompt(self):
+        m = await notifier.wait_for_response(600)
+        self.current_mode = "fno" if m == "2" else "equities"
+        self.is_running = True
+        asyncio.create_task(self.manage_positions())

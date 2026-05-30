@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, HTTPException
 from authlib.integrations.starlette_client import OAuth
 from vega.backend.config import settings
-from .utils import create_access_token
+from .utils import create_access_token, get_password_hash
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 oauth = OAuth()
@@ -12,6 +13,17 @@ oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+
+@router.post("/signup")
+async def signup(req: SignupRequest):
+    # In a real app, save to DB. For VEGA 2.0, we simulate success.
+    # We use get_password_hash(req.password) for future-proofing.
+    hashed = get_password_hash(req.password)
+    return {"message": "Account created", "email": req.email}
 
 @router.get("/google/login")
 async def google_login(request: Request):
