@@ -28,6 +28,8 @@ class TradingOrchestrator:
         symbols = settings.WATCHLIST.split(",")
         signals = await self.scanner.scan_all(symbols, self.strategies)
         for sig in signals:
+            # Add to global main.py signals_cache would be ideal but for simplicity:
+            # We broadcast it.
             await self._broadcast({"type": "new_signal", "data": sig})
             with Session(db_engine) as sess:
                 open_pos = sess.exec(select(Trade).where(Trade.status == "OPEN")).all()
@@ -42,7 +44,7 @@ class TradingOrchestrator:
                         await notifier.send(f"Trade: {sig['side']} {sig['symbol']} @ {sig['entry']}")
 
     async def manage_positions(self):
-        while True: # Position management always runs until process kill
+        while True:
             with Session(db_engine) as sess:
                 for t in sess.exec(select(Trade).where(Trade.status == "OPEN")).all():
                     cp = self.broker.get_live_price(t.symbol)

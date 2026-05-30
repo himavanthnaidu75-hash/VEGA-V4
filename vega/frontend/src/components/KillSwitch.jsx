@@ -1,59 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import useVegaStore from '../store/useVegaStore';
 
 const KillSwitch = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [countdown, setCountdown] = useState(3);
+  const [holding, setHolding] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [isKilled, setIsKilled] = useState(false);
+  const timerRef = useRef();
   const { killToken } = useVegaStore();
 
-  useEffect(() => {
-    let timer;
-    if (showModal && countdown > 0) {
-      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
-    } else if (showModal && countdown === 0) {
-      handleKill();
-    }
-    return () => clearTimeout(timer);
-  }, [showModal, countdown]);
+  const startHold = () => {
+    setHolding(true);
+    const startTime = Date.now();
+    timerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const p = Math.min((elapsed / 3000) * 100, 100);
+      setProgress(p);
+      if (p === 100) {
+        clearInterval(timerRef.current);
+        handleKill();
+      }
+    }, 16);
+  };
+
+  const cancelHold = () => {
+    setHolding(false);
+    setProgress(0);
+    clearInterval(timerRef.current);
+  };
 
   const handleKill = async () => {
     try {
+      setIsKilled(true);
       await axios.post('/kill', {}, {
         headers: { 'X-Kill-Token': killToken }
       });
     } catch (e) {
-      console.error("Kill protocol failed", e);
-      alert("Kill Failed: Check token in Settings");
+      console.error("Kill failed", e);
+      setIsKilled(false);
     }
-    setShowModal(false);
   };
 
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+
   return (
-    <>
+    <div className="relative">
       <button
-        onClick={() => { setShowModal(true); setCountdown(3); }}
-        className="bg-kill text-white px-6 py-2 rounded-xl font-black uppercase tracking-tighter shadow-lg hover:scale-105 active:scale-95 transition-all"
+        onMouseDown={startHold} onMouseUp={cancelHold} onMouseLeave={cancelHold}
+        onTouchStart={startHold} onTouchEnd={cancelHold}
+        className={`relative w-32 h-10 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all ${isKilled ? 'bg-kill text-white' : 'bg-white/5 border border-white/10 text-primary/40'}`}
       >
-        KILL SWITCH
+        <span className="relative z-10">{isKilled ? 'PURGED' : holding ? 'HOLDING...' : 'KILL SYSTEM'}</span>
+        {holding && (
+           <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="absolute inset-0 bg-kill opacity-20 rounded-xl" />
+        )}
       </button>
 
+      {holding && (
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2">
+          <svg className="w-10 h-10 rotate-[-90deg]">
+            <circle cx="20" cy="20" r={radius} fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
+            <circle
+              cx="20" cy="20" r={radius} fill="transparent" stroke="var(--color-kill)" strokeWidth="4"
+              strokeDasharray={circumference} strokeDashoffset={circumference - (progress/100) * circumference}
+              strokeLinecap="round"
+            />
+          </svg>
+        </div>
+      )}
+
       <AnimatePresence>
-        {showModal && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center backdrop-blur-3xl"
-          >
-            <div className="text-center">
-              <h2 className="text-7xl font-black text-kill mb-4 animate-pulse italic">INITIATING PURGE</h2>
-              <p className="text-2xl font-mono text-white/60 mb-12 uppercase tracking-widest">Executing Square-off in {countdown}...</p>
-              <button onClick={() => setShowModal(false)} className="px-8 py-3 border border-white/10 rounded-full text-primary/40 hover:text-white uppercase text-[10px] font-black tracking-[0.3em] transition-all">Abort Protocol</button>
-            </div>
+        {isKilled && (
+          <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} className="fixed inset-0 z-[200] bg-kill flex items-center justify-center">
+            <h1 className="text-9xl font-black italic tracking-tighter text-white animate-pulse">SYSTEM PURGED</h1>
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 };
 
