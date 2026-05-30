@@ -1,56 +1,102 @@
 import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Stars, Float, Icosahedron, TorusKnot, Sparkles } from '@react-three/drei';
-import useVegaStore from '../store/useVegaStore';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Stars, Float, Icosahedron, TorusKnot } from '@react-three/drei';
+import * as THREE from 'three';
 
-function Aurora() {
-  return (
-    <Sparkles count={100} scale={20} size={10} speed={0.5} color="#00B37E" opacity={0.5} />
-  );
-}
+/**
+ * Institutional Three.js Background Engine
+ * High-performance cinematic atmosphere with drifting stars,
+ * rotating wireframe meshes, and smooth mouse parallax.
+ */
 
-function MovingShapes({ intensity = 1 }) {
-  const mesh1 = useRef();
-  const mesh2 = useRef();
+const FloatingScene = ({ intensity = 0.5 }) => {
+  const meshRef1 = useRef();
+  const meshRef2 = useRef();
+  const { mouse } = useThree();
 
+  // Custom parallax drift logic
   useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-    if (mesh1.current) {
-      mesh1.current.rotation.x = t * 0.1 * intensity;
-      mesh1.current.rotation.y = t * 0.15 * intensity;
+    const time = state.clock.getElapsedTime();
+
+    if (meshRef1.current) {
+      meshRef1.current.rotation.x = time * 0.08;
+      meshRef1.current.rotation.y = time * 0.12;
+      // Parallax with lerping
+      meshRef1.current.position.x = THREE.MathUtils.lerp(meshRef1.current.position.x, mouse.x * 2.5, 0.03);
+      meshRef1.current.position.y = THREE.MathUtils.lerp(meshRef1.current.position.y, mouse.y * 2.5, 0.03);
     }
-    if (mesh2.current) {
-      mesh2.current.rotation.z = t * 0.2 * intensity;
+
+    if (meshRef2.current) {
+      meshRef2.current.rotation.x = -time * 0.04;
+      meshRef2.current.rotation.z = time * 0.06;
+      // Counter-parallax
+      meshRef2.current.position.x = THREE.MathUtils.lerp(meshRef2.current.position.x, mouse.x * -1.8, 0.02);
+      meshRef2.current.position.y = THREE.MathUtils.lerp(meshRef2.current.position.y, mouse.y * -1.8, 0.02);
     }
   });
 
+  const accentColor = useMemo(() => {
+    return getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#F5C518';
+  }, []);
+
   return (
     <>
-      <Float speed={2 * intensity} rotationIntensity={0.5} floatIntensity={1}>
-        <Icosahedron ref={mesh1} args={[1, 0]} position={[-3, 2, -5]}>
-          <meshStandardMaterial color="var(--color-secondary)" wireframe />
-        </Icosahedron>
+      <ambientLight intensity={0.15 * intensity} />
+      <pointLight position={[10, 10, 10]} intensity={intensity} color={accentColor} />
+      <pointLight position={[-10, -10, -10]} intensity={intensity * 0.5} />
+
+      {/* 2000 Star Particle System */}
+      <Stars
+        radius={100}
+        depth={60}
+        count={2000}
+        factor={5}
+        saturation={0}
+        fade
+        speed={1.5}
+      />
+
+      {/* Floating Institutional Meshes */}
+      <Float speed={1.2} rotationIntensity={intensity * 2} floatIntensity={intensity * 2}>
+        <mesh ref={meshRef1} position={[6, 3, -8]}>
+          <icosahedronGeometry args={[1.5, 1]} />
+          <meshStandardMaterial
+            color={accentColor}
+            wireframe
+            transparent
+            opacity={0.15 * intensity}
+          />
+        </mesh>
       </Float>
-      <Float speed={1.5 * intensity} rotationIntensity={1} floatIntensity={0.5}>
-        <TorusKnot ref={mesh2} args={[1, 0.3, 100, 16]} position={[4, -2, -8]}>
-          <meshStandardMaterial color="var(--color-secondary)" wireframe />
-        </TorusKnot>
+
+      <Float speed={1.8} rotationIntensity={intensity * 1.5} floatIntensity={intensity * 3}>
+        <mesh ref={meshRef2} position={[-8, -4, -12]}>
+          <torusKnotGeometry args={[2.5, 0.6, 128, 16]} />
+          <meshStandardMaterial
+            color={accentColor}
+            wireframe
+            transparent
+            opacity={0.1 * intensity}
+          />
+        </mesh>
       </Float>
     </>
   );
-}
+};
 
 const ThreeBackground = () => {
-  const theme = JSON.parse(localStorage.getItem('vega_theme_v2') || '{"background":"deepspace","intensity":1}');
+  const intensity = parseFloat(localStorage.getItem('vega_bg_intensity') || '0.5');
+  const bgType = localStorage.getItem('vega_bg_type') || 'Deep Space';
+
+  if (bgType === 'Off') return null;
 
   return (
-    <div className="fixed inset-0 z-[-1]" style={{ backgroundColor: 'var(--color-ink)' }}>
-      <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-        <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} />
-        <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-        {theme.background === 'aurora' && <Aurora />}
-        <MovingShapes intensity={theme.intensity} />
+    <div className="fixed inset-0 z-[-1] pointer-events-none bg-[#111318] transition-colors duration-1000">
+      <Canvas
+        camera={{ position: [0, 0, 10], fov: 45 }}
+        gl={{ antialias: true, alpha: true }}
+      >
+        <FloatingScene intensity={intensity} />
       </Canvas>
     </div>
   );

@@ -2,40 +2,39 @@ import React from 'react';
 import useVegaStore from '../store/useVegaStore';
 
 const MarketTicker = () => {
-  const { tickers } = useVegaStore();
+  const tickers = useVegaStore((state) => state.tickers);
 
-  const liveItems = Object.entries(tickers).map(([s, p]) => ({
-    s, p: p.toLocaleString('en-IN'), c: '+0.0%'
-  }));
+  // Transform tickers object into array of [symbol, price]
+  const tickerEntries = Object.entries(tickers);
 
-  const staticItems = [
-    { s: 'NIFTY 50', p: '22,453.20', c: '+1.2%' },
-    { s: 'RELIANCE', p: '2,945.30', c: '+0.8%' },
-    { s: 'HDFCBANK', p: '1,452.10', c: '-0.4%' },
+  // Use some defaults if tickers is empty
+  const displayTickers = tickerEntries.length > 0 ? tickerEntries : [
+    ["NIFTY 50", "22,453.20"], ["SENSEX", "73,876.15"], ["BANK NIFTY", "47,211.80"],
+    ["RELIANCE", "2,987.40"], ["TCS", "4,120.55"], ["HDFCBANK", "1,442.10"]
   ];
 
-  const items = liveItems.length > 0 ? liveItems : staticItems;
-
   return (
-    <div className="fixed top-16 left-0 w-full h-8 bg-black/40 backdrop-blur-md border-b border-white/5 z-40 flex items-center overflow-hidden">
-      <div className="flex animate-scroll whitespace-nowrap px-8">
-        {[...items, ...items].map((item, i) => (
-          <div key={i} className="flex items-center gap-3 mr-12 group cursor-default">
-            <span className="text-[9px] font-black text-primary/40 uppercase group-hover:text-secondary transition-colors">{item.s}</span>
-            <span className="text-[9px] font-mono text-white/80">{item.p}</span>
-            <span className={`text-[9px] font-black ${item.c.startsWith('+') ? 'text-success' : 'text-danger'}`}>
-              {item.c}
-            </span>
+    <div className="h-[36px] bg-[#000] border-b border-border flex items-center overflow-hidden z-20">
+      <div className="flex whitespace-nowrap animate-marquee">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex gap-12 px-6">
+            {displayTickers.map(([symbol, price]) => (
+              <div key={symbol} className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-text-faint uppercase tracking-widest">{symbol}</span>
+                <span className="text-[11px] font-mono font-bold text-primary">{price}</span>
+              </div>
+            ))}
           </div>
         ))}
       </div>
+
       <style>{`
-        @keyframes scroll {
+        @keyframes marquee {
           0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          100% { transform: translateX(-25%); }
         }
-        .animate-scroll {
-          animation: scroll 30s linear infinite;
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
         }
       `}</style>
     </div>

@@ -1,103 +1,153 @@
-import React, { useState } from 'react';
-import DiagnosticPanel from '../components/DiagnosticPanel';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Save, RefreshCw, Plus, X } from 'lucide-react';
 import ThemeCustomizer from '../components/ThemeCustomizer';
-import useVegaStore from '../store/useVegaStore';
-import { Shield, Key, Map, Layers } from 'lucide-react';
+import DiagnosticPanel from '../components/DiagnosticPanel';
 
 const Config = () => {
-  const [activeTab, setActiveTab] = useState('broker');
-  const { killToken, setKillToken } = useVegaStore();
+  const [config, setConfig] = useState(null);
+  const [watchlist, setWatchlist] = useState([]);
+  const [newSymbol, setNewSymbol] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const { data } = await axios.get('/api/config');
+        setConfig(data);
+        setWatchlist(data.WATCHLIST.split(','));
+      } catch (e) {
+        console.error('Failed to fetch config', e);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const saveConfig = async (updates) => {
+    setSaving(true);
+    try {
+      const merged = { ...config, ...updates };
+      if (updates.WATCHLIST === undefined) merged.WATCHLIST = watchlist.join(',');
+      await axios.patch('/api/config', merged);
+      setConfig(merged);
+    } catch (e) {
+      console.error('Save failed', e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addSymbol = () => {
+    if (newSymbol && !watchlist.includes(newSymbol.toUpperCase())) {
+      setWatchlist([...watchlist, newSymbol.toUpperCase()]);
+      setNewSymbol('');
+    }
+  };
+
+  const removeSymbol = (s) => {
+    setWatchlist(watchlist.filter(x => x !== s));
+  };
+
+  if (!config) return <div className="p-20 text-center text-text-faint font-syne italic">Synchronizing Configuration...</div>;
 
   return (
-    <div className="pt-24 px-10 grid grid-cols-12 gap-10 h-screen overflow-hidden">
-      <div className="col-span-7 bg-white/5 border border-white/10 rounded-[3rem] p-10 overflow-y-auto custom-scrollbar shadow-2xl">
-        <div className="flex gap-10 mb-12 border-b border-white/5">
-          {[
-            { id: 'broker', label: 'Protocol', icon: Shield },
-            { id: 'risk', label: 'Risk', icon: Layers },
-            { id: 'watchlist', label: 'Universe', icon: Map },
-            { id: 'security', label: 'Security', icon: Key },
-            { id: 'theme', label: 'Interface', icon: Layers },
-          ].map(tab => (
-            <button
-              key={tab.id} onClick={() => setActiveTab(tab.id)}
-              className={`pb-6 flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeTab === tab.id ? 'text-secondary border-b-2 border-secondary' : 'text-primary/20 hover:text-primary/40'}`}
-            >
-              <tab.icon size={14} />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+    <div className="p-8 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Left Column: Broker & Risk */}
+      <div className="space-y-8">
+        <section className="bg-surface rounded-3xl border border-border p-8">
+           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-text-dim mb-8">Node Connectivity</h3>
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             {['paper', 'dhan', 'angel', 'zerodha'].map(b => (
+               <div key={b} className="bg-bg/50 border border-border p-4 rounded-2xl flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${config.BROKER === b ? 'bg-success shadow-[0_0_8px_var(--success)]' : 'bg-white/5'}`} />
+                    <span className="text-[11px] font-black uppercase tracking-widest">{b}</span>
+                  </div>
+                  <button
+                    onClick={() => saveConfig({ BROKER: b })}
+                    className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all ${config.BROKER === b ? 'bg-primary text-bg' : 'text-text-faint hover:text-primary hover:bg-primary/5'}`}
+                  >
+                    {config.BROKER === b ? 'ACTIVE' : 'CONNECT'}
+                  </button>
+               </div>
+             ))}
+           </div>
+        </section>
 
-        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
-           {activeTab === 'risk' && (
-             <div className="space-y-10">
-               <div className="grid grid-cols-2 gap-10">
-                 <div className="col-span-2">
-                   <label className="block text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] mb-4">Core Deployment Capital (INR)</label>
-                   <input type="number" defaultValue="100000" className="w-full bg-black/40 border border-white/10 rounded-[2rem] p-6 font-mono text-2xl text-secondary outline-none focus:border-secondary/40 shadow-inner" />
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] mb-4">Risk Scalar (%)</label>
-                   <input type="number" defaultValue="1" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 font-mono text-white outline-none focus:border-secondary/40" />
-                 </div>
-                 <div>
-                   <label className="block text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] mb-4">Node Capacity (Max Pos)</label>
-                   <input type="number" defaultValue="5" className="w-full bg-black/40 border border-white/10 rounded-2xl p-5 font-mono text-white outline-none focus:border-secondary/40" />
+        <section className="bg-surface rounded-3xl border border-border p-8">
+           <div className="flex justify-between items-center mb-8">
+             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-text-dim">Risk Thresholds</h3>
+             <button
+               onClick={() => saveConfig()}
+               className="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-2 hover:brightness-110"
+             >
+               {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+               Commit Changes
+             </button>
+           </div>
+
+           <div className="grid grid-cols-2 gap-6">
+             {[
+               { label: 'Total Capital', key: 'TOTAL_CAPITAL', type: 'number', prefix: '₹' },
+               { label: 'Risk Per Trade', key: 'MAX_RISK_PER_TRADE', type: 'number', suffix: '%' },
+               { label: 'Max Positions', key: 'MAX_OPEN_POSITIONS', type: 'number' },
+               { label: 'Daily Loss Limit', key: 'MAX_DAILY_LOSS', type: 'number', suffix: '%' },
+             ].map(field => (
+               <div key={field.key} className="space-y-2">
+                 <label className="text-[9px] font-black text-text-faint uppercase tracking-widest ml-1">{field.label}</label>
+                 <div className="relative">
+                   {field.prefix && <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-faint font-mono text-xs">{field.prefix}</span>}
+                   <input
+                     type={field.type}
+                     value={config[field.key]}
+                     onChange={e => setConfig({...config, [field.key]: e.target.value})}
+                     className={`w-full bg-bg/50 border border-border rounded-xl py-3 ${field.prefix ? 'pl-8' : 'px-4'} pr-4 text-xs font-mono font-bold outline-none focus:border-primary/40 transition-all text-text`}
+                   />
+                   {field.suffix && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-text-faint font-mono text-xs">{field.suffix}</span>}
                  </div>
                </div>
-               <button className="w-full bg-secondary text-ink font-black py-6 rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all shadow-[0_15px_40px_rgba(245,197,24,0.2)] text-[10px] tracking-[0.3em]">SYNCHRONIZE PARAMETERS</button>
-             </div>
-           )}
+             ))}
+           </div>
+        </section>
 
-           {activeTab === 'security' && (
-             <div className="space-y-8">
-                <div>
-                   <label className="block text-[10px] font-black text-primary/30 uppercase tracking-[0.3em] mb-4">Manual Override Token (Kill Switch)</label>
-                   <div className="relative">
-                      <input
-                        type="password"
-                        value={killToken}
-                        onChange={e => setKillToken(e.target.value)}
-                        placeholder="Enter Secure Token"
-                        className="w-full bg-black/40 border border-white/10 rounded-[2rem] p-6 font-mono text-lg text-secondary outline-none focus:border-secondary/40 pr-20"
-                      />
-                      <Key className="absolute right-6 top-1/2 -translate-y-1/2 text-primary/20" size={20} />
-                   </div>
-                   <p className="mt-4 text-[9px] text-primary/20 font-bold uppercase tracking-widest leading-relaxed px-4 italic">Warning: This token is required to execute the emergency purge protocol. It is stored locally on this terminal node.</p>
+        <section className="bg-surface rounded-3xl border border-border p-8">
+           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-text-dim mb-8">Universe Watchlist</h3>
+           <div className="flex flex-wrap gap-2 mb-6">
+              {watchlist.map(s => (
+                <div key={s} className="bg-bg/50 border border-border pl-3 pr-1 py-1 rounded-lg flex items-center gap-2 group hover:border-danger/30 transition-all">
+                  <span className="text-[10px] font-black tracking-tight uppercase italic font-syne">{s}</span>
+                  <button onClick={() => removeSymbol(s)} className="p-1 text-text-faint hover:text-danger">
+                    <X size={10} />
+                  </button>
                 </div>
-             </div>
-           )}
-
-           {activeTab === 'broker' && (
-             <div className="space-y-8">
-                <div className="p-10 bg-gradient-to-br from-secondary/10 to-transparent border border-secondary/20 rounded-[3rem] flex justify-between items-center shadow-2xl group overflow-hidden relative">
-                  <div className="absolute -right-10 -top-10 text-secondary/5 group-hover:text-secondary/10 transition-colors duration-1000 rotate-12">
-                     <Shield size={200} />
-                  </div>
-                  <div className="z-10">
-                    <h4 className="font-black text-2xl mb-2 text-white tracking-tighter italic">DHAN HQ <span className="text-[10px] text-secondary/60 not-italic font-bold ml-3 tracking-[0.2em] border border-secondary/30 px-3 py-1 rounded-full uppercase">Fiber Uplink</span></h4>
-                    <p className="text-primary/40 text-[10px] uppercase font-black tracking-[0.3em]">Protocol active: VEGA_NODE_01</p>
-                  </div>
-                  <div className="z-10 flex items-center gap-3 px-6 py-2 rounded-full bg-success/10 border border-success/20">
-                    <div className="w-2 h-2 bg-success rounded-full animate-pulse shadow-[0_0_10px_#00B37E]" />
-                    <span className="text-[10px] text-success font-black uppercase tracking-[0.2em]">Live</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-8">
-                  {['Zerodha Kite', 'Angel One', 'Paper SIM'].map(b => (
-                    <button key={b} className="p-8 bg-white/5 border border-white/10 rounded-[2rem] text-[10px] font-black uppercase tracking-[0.3em] text-primary/30 hover:bg-white/[0.08] hover:text-white hover:border-white/20 transition-all">Connect {b}</button>
-                  ))}
-                </div>
-             </div>
-           )}
-
-           {activeTab === 'theme' && <ThemeCustomizer />}
-        </div>
+              ))}
+           </div>
+           <div className="flex gap-2">
+             <input
+               type="text"
+               placeholder="ADD SYMBOL (e.g. INFY)"
+               value={newSymbol}
+               onChange={e => setNewSymbol(e.target.value.toUpperCase())}
+               onKeyDown={e => e.key === 'Enter' && addSymbol()}
+               className="flex-1 bg-bg/50 border border-border rounded-xl py-3 px-4 text-[10px] font-black uppercase outline-none focus:border-primary/40 transition-all"
+             />
+             <button onClick={addSymbol} className="bg-white/5 border border-border p-3 rounded-xl text-text hover:bg-primary hover:text-bg transition-all">
+               <Plus size={16} />
+             </button>
+           </div>
+        </section>
       </div>
 
-      <div className="col-span-5 h-full overflow-hidden pb-10">
-        <DiagnosticPanel />
+      {/* Right Column: Theme & Diagnostics */}
+      <div className="space-y-8">
+        <section className="bg-surface rounded-3xl border border-border p-8">
+           <h3 className="text-xs font-black uppercase tracking-[0.2em] text-text-dim mb-8">Visual Atmosphere</h3>
+           <ThemeCustomizer />
+        </section>
+
+        <section className="bg-surface rounded-3xl border border-border p-8">
+           <DiagnosticPanel />
+        </section>
       </div>
     </div>
   );

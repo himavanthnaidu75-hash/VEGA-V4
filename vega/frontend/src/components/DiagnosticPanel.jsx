@@ -1,69 +1,78 @@
 import React, { useState } from 'react';
-import { CheckCircle2, XCircle, Loader2, Play } from 'lucide-react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { CheckCircle2, XCircle, AlertCircle, Play, Loader2 } from 'lucide-react';
 
 const DiagnosticPanel = () => {
-  const [results, setResults] = useState([]);
   const [running, setRunning] = useState(false);
+  const [results, setResults] = useState([]);
 
-  const steps = [
-    { id: 'broker', name: 'Broker Connection', endpoint: '/api/diag/broker' },
-    { id: 'feed', name: 'Live Price Feed', endpoint: '/api/diag/feed' },
-    { id: 'data', name: 'Data Pipeline', endpoint: '/api/diag/data' },
-    { id: 'indicators', name: 'Indicator Engine', endpoint: '/api/diag/indicators' },
-    { id: 'telegram', name: 'Telegram Bot', endpoint: '/api/diag/telegram' },
-    { id: 'db', name: 'Database Persistence', endpoint: '/api/diag/db' },
-  ];
-
-  const runAll = async () => {
+  const runDiagnostics = async () => {
     setRunning(true);
     setResults([]);
-    for (const step of steps) {
-      try {
-        const start = Date.now();
-        // Mocking backend response for frontend build
-        await new Promise(r => setTimeout(r, 400));
-        const latency = Date.now() - start;
-        setResults(prev => [...prev, { ...step, status: 'PASS', latency: `${latency}ms` }]);
-      } catch (e) {
-        setResults(prev => [...prev, { ...step, status: 'FAIL', latency: '0ms' }]);
+    try {
+      const { data } = await axios.get('/api/diagnostics/run');
+      // Simulate sequential animation
+      for (const step of data.steps) {
+        setResults(prev => [...prev, step]);
+        await new Promise(r => setTimeout(r, 600));
       }
+    } catch (e) {
+      console.error('Diagnostics failed', e);
+      setResults(prev => [...prev, { name: 'Critical Failure', status: 'FAIL', detail: 'API Communication Error' }]);
+    } finally {
+      setRunning(false);
     }
-    setRunning(false);
+  };
+
+  const getIcon = (status) => {
+    switch (status) {
+      case 'PASS': return <CheckCircle2 size={14} className="text-success" />;
+      case 'FAIL': return <XCircle size={14} className="text-danger" />;
+      default: return <AlertCircle size={14} className="text-primary" />;
+    }
   };
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col h-full">
-      <div className="flex justify-between items-center mb-8">
-        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/40">Diagnostic Health</h3>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <span className="text-[9px] font-black text-text-faint uppercase tracking-widest">System Health Diagnostics</span>
         <button
-          onClick={runAll} disabled={running}
-          className="p-2 bg-secondary/10 text-secondary rounded-lg hover:bg-secondary/20 transition-all disabled:opacity-50"
+          onClick={runDiagnostics}
+          disabled={running}
+          className="flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-primary hover:text-bg transition-all disabled:opacity-50"
         >
-          {running ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} />}
+          {running ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+          {running ? 'Running...' : 'Run Diagnostics'}
         </button>
       </div>
 
-      <div className="space-y-4 flex-1">
-        {steps.map((step) => {
-          const res = results.find(r => r.id === step.id);
-          return (
-            <div key={step.id} className="flex justify-between items-center p-4 bg-white/5 rounded-xl border border-white/5 group hover:border-white/10 transition-all">
-              <div className="flex items-center gap-4">
-                <div className={`p-2 rounded-lg ${res ? (res.status === 'PASS' ? 'text-success' : 'text-danger') : 'text-primary/20'}`}>
-                  {res ? (res.status === 'PASS' ? <CheckCircle2 size={16} /> : <XCircle size={16} />) : <div className="w-4 h-4 rounded-full border-2 border-primary/10" />}
+      <div className="space-y-3">
+        <AnimatePresence>
+          {results.map((r, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center justify-between bg-bg/50 border border-border p-3 rounded-xl"
+            >
+              <div className="flex items-center gap-3">
+                {getIcon(r.status)}
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-text uppercase tracking-tight">{r.name}</span>
+                  <span className="text-[8px] font-bold text-text-faint uppercase">{r.detail}</span>
                 </div>
-                <span className="text-xs font-bold text-primary/80">{step.name}</span>
               </div>
-              {res && (
-                <div className="text-right">
-                  <div className="text-[10px] font-black uppercase text-success">{res.status}</div>
-                  <div className="text-[8px] font-mono text-primary/20">{res.latency}</div>
-                </div>
-              )}
-            </div>
-          );
-        })}
+              <span className="text-[9px] font-mono font-bold text-text-dim">{r.latency}ms</span>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+
+        {!running && results.length === 0 && (
+          <div className="py-12 text-center text-text-faint text-[9px] font-black uppercase tracking-widest italic">
+            Diagnostics Ready
+          </div>
+        )}
       </div>
     </div>
   );

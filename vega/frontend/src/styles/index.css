@@ -3,18 +3,45 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #F7F7F5;
-  --color-secondary: #F5C518;
-  --color-ink: #0A0F2C;
-  --color-success: #00B37E;
-  --color-danger: #E83535;
-  --color-kill: #CC2200;
-  --color-surface: #FFFFFF;
-  --color-border: #E8E8E4;
+  --bg: #111318;
+  --surface: #1A1D24;
+  --surface2: #1F2229;
+  --border: rgba(255,255,255,0.06);
+  --border-bright: rgba(255,255,255,0.12);
+  --primary: #F5C518;
+  --primary-dim: rgba(245,197,24,0.12);
+  --text: #E8EAF0;
+  --text-dim: rgba(232,234,240,0.4);
+  --text-faint: rgba(232,234,240,0.15);
+  --success: #00D4A0;
+  --danger: #FF4560;
+  --kill: #CC2200;
 }
 
 body {
-  background-color: var(--color-ink);
-  color: var(--color-primary);
-  font-family: 'Inter', sans-serif;
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-syne {
+  font-family: 'Syne', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 10px;
 }

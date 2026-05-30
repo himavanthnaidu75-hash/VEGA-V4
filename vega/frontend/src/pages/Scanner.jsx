@@ -1,116 +1,184 @@
-import React, { useState, useEffect } from 'react';
-import useVegaStore from '../store/useVegaStore';
-import { Search, Filter, Activity, Zap } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import { Search, Filter, TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import useVegaStore from '../store/useVegaStore';
 
 const Scanner = () => {
-  const { signals } = useVegaStore();
-  const [dbSignals, setDbSignals] = useState([]);
-  const [filterType, setFilterType] = useState('all');
-  const [minConf, setMinConf] = useState(65);
+  const [signals, setSignals] = useState([]);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [minScore, setMinScore] = useState(0);
+  const [sortConfig, setSortConfig] = useState({ key: 'score', direction: 'desc' });
+
+  const liveSignals = useVegaStore((state) => state.signals);
 
   useEffect(() => {
     const fetchSignals = async () => {
       try {
-        const res = await axios.get('/api/signals');
-        setDbSignals(res.data);
-      } catch (e) { console.error(e); }
+        const { data } = await axios.get('/api/signals');
+        setSignals(data);
+      } catch (e) {
+        console.error('Failed to fetch signals', e);
+      }
     };
     fetchSignals();
   }, []);
 
-  const allSignals = [...signals, ...dbSignals].filter((s, i, self) =>
-    i === self.findIndex((t) => t.symbol === s.symbol && t.strategy_name === s.strategy_name)
-  );
+  // Merge live signals into list
+  const mergedSignals = useMemo(() => {
+    const combined = [...liveSignals, ...signals];
+    // Remove duplicates based on symbol + strategy
+    const unique = [];
+    const seen = new Set();
+    for (const s of combined) {
+      const id = `${s.symbol}-${s.strategy}`;
+      if (!seen.has(id)) {
+        unique.push(s);
+        seen.add(id);
+      }
+    }
+    return unique;
+  }, [liveSignals, signals]);
 
-  const filtered = allSignals.filter(s => {
-    const matchType = filterType === 'all' || s.strategy_name.toLowerCase().includes(filterType);
-    const matchConf = s.ict_score >= minConf;
-    return matchType && matchConf;
-  });
+  const filteredSignals = useMemo(() => {
+    return mergedSignals
+      .filter(s => s.symbol.toLowerCase().includes(search.toLowerCase()))
+      .filter(s => typeFilter === 'ALL' || s.strategy_type === typeFilter)
+      .filter(s => s.score >= minScore)
+      .sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+  }, [mergedSignals, search, typeFilter, minScore, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'desc';
+    if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   return (
-    <div className="pt-24 px-10 h-screen flex flex-col pb-10">
-      <div className="flex justify-between items-end mb-10">
-        <div>
-           <h2 className="text-4xl font-black text-white italic tracking-tighter uppercase mb-2">Quantum Grid</h2>
-           <p className="text-[10px] font-bold text-primary/30 uppercase tracking-[0.4em]">Multi-Timeframe Signal Matrix</p>
-        </div>
-
-        <div className="flex gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-[8px] font-black text-primary/30 uppercase tracking-widest ml-2">Min ICT Score</label>
-            <input
-              type="range" min="0" max="100" value={minConf} onChange={e => setMinConf(parseInt(e.target.value))}
-              className="accent-secondary w-32 h-1 bg-white/5 rounded-lg appearance-none cursor-pointer"
-            />
+    <div className="p-8 max-w-[1600px] mx-auto">
+      <div className="flex flex-col gap-8">
+        {/* Header & Filter Bar */}
+        <div className="flex flex-col gap-6">
+          <div className="flex justify-between items-end">
+            <div>
+              <h1 className="text-4xl font-black font-syne italic text-text mb-2 uppercase tracking-tight">Institutional Scanner</h1>
+              <p className="text-[11px] font-black text-text-dim uppercase tracking-[0.3em]">Cross-Referencing 169+ Quantitative Nodes</p>
+            </div>
+            <div className="flex items-center gap-4 bg-surface/50 border border-border p-2 rounded-xl">
+               <div className="flex items-center gap-2 px-4 py-2 border-r border-border">
+                  <Clock size={14} className="text-primary" />
+                  <span className="text-[10px] font-mono font-bold text-text-dim">NEXT CYCLE: 42s</span>
+               </div>
+               <div className="px-4">
+                  <span className="text-[10px] font-black text-text-dim uppercase tracking-widest">Active nodes: 169</span>
+               </div>
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-[8px] font-black text-primary/30 uppercase tracking-widest ml-2">Engine Type</label>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-surface p-4 rounded-2xl border border-border">
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-faint group-focus-within:text-primary transition-colors" size={16} />
+              <input
+                type="text"
+                placeholder="Search symbol..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="w-full bg-bg/50 border border-border rounded-xl py-3 pl-12 pr-4 text-xs font-bold outline-none focus:border-primary/40 transition-all placeholder:text-text-faint"
+              />
+            </div>
+
             <select
-              value={filterType} onChange={e => setFilterType(e.target.value)}
-              className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black uppercase text-secondary outline-none"
+              value={typeFilter}
+              onChange={e => setTypeFilter(e.target.value)}
+              className="bg-bg/50 border border-border rounded-xl py-3 px-4 text-xs font-bold outline-none focus:border-primary/40 text-text appearance-none cursor-pointer"
             >
-              <option value="all">ALL STRATEGIES</option>
-              <option value="ema">TREND (EMA)</option>
-              <option value="rsi">REVERSION (RSI)</option>
-              <option value="breakout">BREAKOUT</option>
+              <option value="ALL">All Strategy Types</option>
+              <option value="TREND">Trend Following</option>
+              <option value="REVERSION">Mean Reversion</option>
+              <option value="BREAKOUT">Breakout</option>
+              <option value="QUANT">Quantitative</option>
             </select>
+
+            <div className="md:col-span-2 flex items-center gap-6 px-4">
+              <span className="text-[9px] font-black text-text-dim uppercase tracking-widest whitespace-nowrap">Min ICT Score: {minScore}</span>
+              <input
+                type="range"
+                min="0" max="100"
+                value={minScore}
+                onChange={e => setMinScore(parseInt(e.target.value))}
+                className="flex-1 accent-primary"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 bg-white/5 border border-white/10 rounded-[3rem] overflow-hidden flex flex-col shadow-2xl">
-        <div className="overflow-y-auto flex-1 custom-scrollbar">
+        {/* Results Table */}
+        <div className="bg-surface rounded-2xl border border-border overflow-hidden">
           <table className="w-full text-left">
-            <thead className="bg-white/5 sticky top-0 z-10 border-b border-white/5 backdrop-blur-md">
-              <tr>
-                <th className="p-8 text-[10px] font-black uppercase tracking-widest text-primary/20">Protocol / Asset</th>
-                <th className="p-8 text-[10px] font-black uppercase tracking-widest text-primary/20">Signal Side</th>
-                <th className="p-8 text-[10px] font-black uppercase tracking-widest text-primary/20">ICT Score</th>
-                <th className="p-8 text-[10px] font-black uppercase tracking-widest text-primary/20">Parameters</th>
-                <th className="p-8 text-[10px] font-black uppercase tracking-widest text-primary/20">Last Pulse</th>
+            <thead>
+              <tr className="bg-bg/20 border-b border-border text-[9px] font-black text-text-faint uppercase tracking-widest">
+                <th className="px-8 py-5 cursor-pointer hover:text-text transition-colors" onClick={() => requestSort('symbol')}>Symbol</th>
+                <th className="px-8 py-5">HTF Bias</th>
+                <th className="px-8 py-5 cursor-pointer hover:text-text" onClick={() => requestSort('active_strategies')}>Nodes Active</th>
+                <th className="px-8 py-5">Best Signal</th>
+                <th className="px-8 py-5 cursor-pointer hover:text-text" onClick={() => requestSort('score')}>ICT Confidence</th>
+                <th className="px-8 py-5 text-right">Last Scan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {filtered.map((s, i) => (
-                <tr key={i} className="hover:bg-white/[0.03] transition-all group">
-                  <td className="p-8">
-                    <div className="flex flex-col">
-                      <span className="font-black text-sm text-white group-hover:text-secondary transition-colors">{s.symbol}</span>
-                      <span className="text-[9px] text-primary/30 uppercase font-bold tracking-tighter">{s.strategy_name}</span>
+            <tbody className="divide-y divide-border/30">
+              {filteredSignals.map((s, idx) => (
+                <tr key={idx} className="hover:bg-white/[0.02] transition-colors group cursor-default">
+                  <td className="px-8 py-6">
+                    <div className="text-[14px] font-black font-syne text-text italic uppercase tracking-tight">{s.symbol}</div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className={`flex items-center gap-2 ${s.htf_bias === 'BULLISH' ? 'text-success' : 'text-danger'}`}>
+                       {s.htf_bias === 'BULLISH' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                       <span className="text-[10px] font-black uppercase tracking-widest">{s.htf_bias || 'NEUTRAL'}</span>
                     </div>
                   </td>
-                  <td className="p-8">
-                    <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase border ${s.side === 'BUY' ? 'bg-success/10 border-success/20 text-success' : 'bg-danger/10 border-danger/20 text-danger'}`}>
-                      {s.side}
+                  <td className="px-8 py-6">
+                    <span className="bg-bg/50 border border-border px-3 py-1 rounded-lg text-[10px] font-mono font-bold text-primary">
+                      {s.active_strategies || 1}
                     </span>
                   </td>
-                  <td className="p-8">
-                    <div className="flex items-center gap-4">
-                      <div className="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden shadow-inner">
-                        <motion.div initial={{ width: 0 }} animate={{ width: `${s.ict_score}%` }} className="h-full bg-secondary shadow-[0_0_10px_#F5C518]" />
-                      </div>
-                      <span className="text-xs font-mono font-black text-secondary">{s.ict_score}</span>
+                  <td className="px-8 py-6">
+                    <span className={`text-[10px] font-black uppercase ${s.side === 'BUY' ? 'text-success' : 'text-danger'}`}>
+                      {s.side} @ {s.price?.toFixed(2) || '---'}
+                    </span>
+                  </td>
+                  <td className="px-8 py-6 w-[240px]">
+                    <div className="flex flex-col gap-2">
+                       <div className="flex justify-between items-end">
+                         <span className="text-lg font-mono font-black text-primary leading-none">{s.score}</span>
+                         <span className="text-[8px] font-black text-text-faint uppercase">Confidence</span>
+                       </div>
+                       <div className="h-1.5 bg-bg/50 rounded-full overflow-hidden border border-border/50">
+                         <div
+                           className="h-full bg-primary shadow-[0_0_12px_rgba(245,197,24,0.4)] transition-all duration-1000"
+                           style={{ width: `${s.score}%` }}
+                         />
+                       </div>
                     </div>
                   </td>
-                  <td className="p-8">
-                    <div className="flex gap-4 font-mono text-[10px] text-primary/40">
-                       <span title="Entry">E: {s.entry}</span>
-                       <span title="Stop Loss" className="text-danger/40">S: {s.sl}</span>
-                    </div>
-                  </td>
-                  <td className="p-8">
-                    <div className="flex items-center gap-2">
-                       <Activity size={10} className="text-success animate-pulse" />
-                       <span className="text-[10px] font-mono text-primary/20 tracking-tighter">10:45:00.245</span>
-                    </div>
+                  <td className="px-8 py-6 text-right">
+                    <span className="text-[10px] font-mono font-bold text-text-dim italic">
+                      {s.timestamp ? new Date(s.timestamp).toLocaleTimeString() : 'JUST NOW'}
+                    </span>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {filteredSignals.length === 0 && (
                 <tr>
-                   <td colSpan="5" className="p-20 text-center text-[10px] font-black uppercase text-primary/10 tracking-[0.5em]">Searching Multi-Dimensional Universe...</td>
+                  <td colSpan="6" className="py-40 text-center">
+                    <p className="text-[10px] font-black text-text-faint uppercase tracking-[0.5em] italic">No Nodes Detected in Current Filter Plane</p>
+                  </td>
                 </tr>
               )}
             </tbody>
