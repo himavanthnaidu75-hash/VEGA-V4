@@ -5,6 +5,7 @@ from backend.strategies.confirmation_model import ICTConfirmationModel
 
 def test_ict_score_structure():
     model = ICTConfirmationModel()
+    # Mock data with 60 rows to satisfy strategy requirements
     df = pd.DataFrame({
         'Open': np.random.rand(60),
         'High': np.random.rand(60),

@@ -1,6 +1,6 @@
 import asyncio, json
 from typing import List, Optional
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Header
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Header, Body
 from backend.config import settings
 from backend.utils.logger import logger
 from backend.utils.notifier import notifier
@@ -15,8 +15,9 @@ from backend.strategies.external import get_external_strategies
 from backend.engine.kill_switch import KillSwitch
 from backend.data.live_feed import LiveFeed
 from backend.data.fetcher import fetcher
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from datetime import datetime
+from pydantic import BaseModel
 
 app = FastAPI(title="VEGA 2.0")
 app.include_router(google_router)
@@ -69,9 +70,16 @@ async def ws_endpoint(websocket: WebSocket):
         while True: await websocket.receive_text()
     except WebSocketDisconnect: manager.disconnect(websocket)
 
+class KillBody(BaseModel):
+    token: Optional[str] = None
+
 @app.post("/kill")
-async def manual_kill(x_kill_token: Optional[str] = Header(None)):
-    if x_kill_token == settings.KILL_TOKEN:
+async def manual_kill(
+    x_kill_token: Optional[str] = Header(None),
+    body: KillBody = Body(None)
+):
+    token = x_kill_token or (body.token if body else None)
+    if token == settings.KILL_TOKEN:
         await kill_sw_inst.execute(reason="Manual Overrride")
         return {"status": "purged"}
     raise HTTPException(status_code=401)
@@ -94,39 +102,64 @@ def get_ohlcv(symbol: str, interval: str = "5m"):
 
 @app.get("/api/signals")
 def get_signals():
-    # In a real scenario, this would pull from a persistent signal log or live memory
-    # Returning mock data for frontend build verification
-    return [
-        {"symbol": "RELIANCE", "strategy_name": "EMA Confluence", "side": "BUY", "ict_score": 85, "entry": 2940.5, "sl": 2910, "tp": 3000},
-        {"symbol": "TCS", "strategy_name": "RSI Reversal", "side": "SELL", "ict_score": 72, "entry": 3950.2, "sl": 3980, "tp": 3890}
-    ]
+    return orchestrator.active_signals
+
+@app.get("/api/trades")
+def get_trades():
+    with Session(db_engine) as sess:
+        return sess.exec(select(Trade).order_by(Trade.created_at.desc())).all()
+
+def calculate_metrics(trades: List[Trade]):
+    if not trades:
+        return {"pnl": 0.0, "winRate": 0.0, "profitFactor": 0.0, "drawdown": 0.0}
+
+    total_pnl = sum(t.pnl for t in trades if t.pnl is not None)
+    wins = [t.pnl for t in trades if t.pnl is not None and t.pnl > 0]
+    losses = [abs(t.pnl) for t in trades if t.pnl is not None and t.pnl < 0]
+
+    win_rate = (len(wins) / len(trades)) * 100 if trades else 0
+    profit_factor = sum(wins) / sum(losses) if losses else (sum(wins) if wins else 0)
+
+    peak = settings.TOTAL_CAPITAL
+    current = settings.TOTAL_CAPITAL
+    max_dd = 0
+    for t in trades:
+        if t.pnl is not None:
+            current += t.pnl
+            if current > peak: peak = current
+            dd = (peak - current) / peak * 100
+            if dd > max_dd: max_dd = dd
+
+    return {
+        "pnl": total_pnl,
+        "winRate": round(win_rate, 2),
+        "profitFactor": round(profit_factor, 2),
+        "drawdown": round(max_dd, 2)
+    }
 
 @app.get("/api/performance")
 def get_performance():
     with Session(db_engine) as sess:
-        trades = sess.exec(select(Trade).order_by(Trade.exit_time)).all()
+        trades = sess.exec(select(Trade).where(Trade.status == "CLOSED").order_by(Trade.exit_time)).all()
         cumulative = 0
         perf = []
         for t in trades:
             if t.pnl is not None:
                 cumulative += t.pnl
                 time_val = int(t.exit_time.timestamp()) if t.exit_time else int(t.created_at.timestamp())
-                perf.append({"time": time_val, "value": 100000 + cumulative})
+                perf.append({"time": time_val, "value": settings.TOTAL_CAPITAL + cumulative})
+
         if not perf:
-            # Generate mock historical curve if empty
-            import time
-            start = int(time.time()) - 86400 * 7
-            perf = [{"time": start + i*86400, "value": 100000 + i*1500} for i in range(7)]
-        return perf
+            now = int(datetime.utcnow().timestamp())
+            perf = [{"time": now - 3600, "value": settings.TOTAL_CAPITAL}, {"time": now, "value": settings.TOTAL_CAPITAL}]
+
+        return {"history": perf, "stats": calculate_metrics(trades)}
 
 @app.get("/api/stats")
-def get_stats():
-    return {
-        "win_rate": 64.5,
-        "avg_rr": 1.8,
-        "profit_factor": 2.4,
-        "max_drawdown": 2.1
-    }
+def get_stats_endpoint():
+    with Session(db_engine) as sess:
+        trades = sess.exec(select(Trade).where(Trade.status == "CLOSED")).all()
+        return calculate_metrics(trades)
 
 if __name__ == "__main__":
     import uvicorn

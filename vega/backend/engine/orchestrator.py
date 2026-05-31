@@ -15,7 +15,7 @@ class TradingOrchestrator:
         self.broker, self.ws_manager = broker, ws_manager
         self.scanner, self.risk_manager = Scanner(), RiskManager()
         self.order_manager = OrderManager(broker)
-        self.strategies, self.is_running = [], False
+        self.strategies, self.is_running, self.active_signals = [], False, []
         self.current_mode = settings.DEFAULT_TRADE_MODE
 
     def set_strategies(self, s): self.strategies = s
@@ -27,6 +27,7 @@ class TradingOrchestrator:
         if not self.is_running: return
         symbols = settings.WATCHLIST.split(",")
         signals = await self.scanner.scan_all(symbols, self.strategies)
+        self.active_signals = signals
         for sig in signals:
             # Add to global main.py signals_cache would be ideal but for simplicity:
             # We broadcast it.

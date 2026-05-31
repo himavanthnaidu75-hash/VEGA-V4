@@ -13,4 +13,5 @@ def test_ema_confluence_signal():
         'Volume': np.random.rand(250)
     })
     sig = strat.generate_signal(df)
+    # Signal might be None depending on random data, but call shouldn't crash
     assert sig is None or isinstance(sig, dict)

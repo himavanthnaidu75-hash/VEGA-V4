@@ -71,8 +71,8 @@ const Analytics = () => {
     const fetchData = async () => {
       try {
         const [perfRes, tradesRes] = await Promise.all([
-          api.get('/performance'),
-          api.get('/trades')
+          api.get('/api/performance'),
+          api.get('/api/trades')
         ]);
         setPerformance(perfRes.data.history || []);
         setTrades(tradesRes.data || []);
