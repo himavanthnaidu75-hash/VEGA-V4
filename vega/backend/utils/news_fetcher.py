@@ -1,5 +1,5 @@
 import feedparser
-from vega.backend.utils.logger import logger
+from backend.utils.logger import logger
 
 class NewsFetcher:
     def get_news(self):

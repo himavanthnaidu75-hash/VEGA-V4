@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import ema, iv_rank
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import ema, iv_rank
 import pandas as pd
 class DirectionalSpreadStrategy(BaseStrategy):
     def __init__(self): super().__init__("Directional Spread", "1d", "options")

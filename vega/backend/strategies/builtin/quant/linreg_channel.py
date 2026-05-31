@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import linear_regression_channel
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import linear_regression_channel
 import pandas as pd
 class LinearRegressionChannelStrategy(BaseStrategy):
     def __init__(self): super().__init__("LinReg Channel", "1h", "quant")

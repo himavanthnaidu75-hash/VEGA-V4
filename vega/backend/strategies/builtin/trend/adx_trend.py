@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import adx
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import adx
 import pandas as pd
 
 class ADXTrendStrategy(BaseStrategy):

@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import iv_rank, adx
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import iv_rank, adx
 import pandas as pd
 class IronCondorStrategy(BaseStrategy):
     def __init__(self): super().__init__("Iron Condor", "1d", "options")

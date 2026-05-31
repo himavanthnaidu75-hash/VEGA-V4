@@ -1,9 +1,9 @@
 from dhanhq import dhanhq
 import pandas as pd
 from typing import List, Dict
-from vega.backend.broker.base import BrokerInterface, Position, Order, OrderResult, FundSummary
-from vega.backend.config import settings
-from vega.backend.utils.mapping import get_security_id
+from backend.broker.base import BrokerInterface, Position, Order, OrderResult, FundSummary
+from backend.config import settings
+from backend.utils.mapping import get_security_id
 
 class DhanBroker(BrokerInterface):
     def __init__(self):
@@ -46,6 +46,6 @@ class DhanBroker(BrokerInterface):
         import yfinance as yf
         return yf.Ticker(f"{s}.NS").fast_info['lastPrice']
     def get_ohlcv(self, s, i, f="", t=""):
-        from vega.backend.data.fetcher import fetcher
+        from backend.data.fetcher import fetcher
         return fetcher.get_ohlcv(s, i)
     def subscribe_live_feed(self, s, c): pass

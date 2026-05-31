@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import volume_profile_poc
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import volume_profile_poc
 import pandas as pd
 class VolumeProfileBreakoutStrategy(BaseStrategy):
     def __init__(self): super().__init__("Volume Breakout", "15m", "breakout")

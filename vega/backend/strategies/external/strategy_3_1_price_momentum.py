@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import price_momentum_return, price_momentum_vol
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import price_momentum_return, price_momentum_vol
 import pandas as pd
 class PriceMomentumStrategy(BaseStrategy):
     def __init__(self): super().__init__("Price Momentum (3.1)", "1d", "trend")

@@ -1,5 +1,5 @@
-from vega.backend.config import settings
-from vega.backend.utils.indicators import kelly_fraction
+from backend.config import settings
+from backend.utils.indicators import kelly_fraction
 
 class RiskManager:
     def calculate_position_size(self, entry, sl, method="atr", wr=0.5, aw=2, al=1):

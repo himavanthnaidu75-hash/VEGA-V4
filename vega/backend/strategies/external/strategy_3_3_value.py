@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import value_bp_ratio
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import value_bp_ratio
 import pandas as pd
 class ValueStrategy(BaseStrategy):
     def __init__(self): super().__init__("Value (3.3)", "1d", "reversion")

@@ -1,14 +1,14 @@
 import asyncio, json
 from datetime import datetime
 from sqlmodel import Session, select
-from vega.backend.models import engine as db_engine
-from vega.backend.models.trade import Trade
-from vega.backend.engine.scanner import Scanner
-from vega.backend.engine.risk_manager import RiskManager
-from vega.backend.engine.order_manager import OrderManager
-from vega.backend.config import settings
-from vega.backend.utils.notifier import notifier
-from vega.backend.utils.logger import logger
+from backend.models import engine as db_engine
+from backend.models.trade import Trade
+from backend.engine.scanner import Scanner
+from backend.engine.risk_manager import RiskManager
+from backend.engine.order_manager import OrderManager
+from backend.config import settings
+from backend.utils.notifier import notifier
+from backend.utils.logger import logger
 
 class TradingOrchestrator:
     def __init__(self, broker, ws_manager=None):

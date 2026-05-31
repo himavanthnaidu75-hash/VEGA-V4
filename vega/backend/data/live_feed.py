@@ -1,5 +1,5 @@
 import asyncio, json, yfinance as yf
-from vega.backend.utils.logger import logger
+from backend.utils.logger import logger
 
 class LiveFeed:
     def __init__(self, broker, ws_manager=None):
@@ -7,7 +7,7 @@ class LiveFeed:
     async def start(self):
         asyncio.create_task(self._polling_loop())
     async def _polling_loop(self):
-        from vega.backend.config import settings
+        from backend.config import settings
         while True:
             for s in settings.WATCHLIST.split(","):
                 try:

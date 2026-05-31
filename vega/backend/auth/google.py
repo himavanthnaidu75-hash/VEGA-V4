@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request, HTTPException
 from authlib.integrations.starlette_client import OAuth
-from vega.backend.config import settings
+from backend.config import settings
 from .utils import create_access_token, get_password_hash
 from pydantic import BaseModel
 

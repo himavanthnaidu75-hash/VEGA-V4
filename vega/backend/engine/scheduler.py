@@ -1,10 +1,10 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 import asyncio
-from vega.backend.utils.logger import logger
-from vega.backend.utils.notifier import notifier
-from vega.backend.utils.indicators import hurst_exponent
-from vega.backend.config import settings
+from backend.utils.logger import logger
+from backend.utils.notifier import notifier
+from backend.utils.indicators import hurst_exponent
+from backend.config import settings
 
 class VegaScheduler:
     def __init__(self, orch):
@@ -56,7 +56,7 @@ class VegaScheduler:
         logger.info("ORB strategies deactivated.")
 
     async def midday_recal(self):
-        from vega.backend.data.fetcher import fetcher
+        from backend.data.fetcher import fetcher
         h_values = []
         for s in settings.WATCHLIST.split(","):
             df = fetcher.get_ohlcv(s, "1d")
@@ -82,7 +82,7 @@ class VegaScheduler:
         logger.info("New entry window closed.")
 
     async def square_off(self):
-        from vega.backend.engine.kill_switch import KillSwitch
+        from backend.engine.kill_switch import KillSwitch
         ks = KillSwitch(broker=self.o.broker, ws_manager=self.o.ws_manager)
         await ks.execute(reason="End of Session Purge")
 

@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import bb_squeeze, bollinger_bands
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import bb_squeeze, bollinger_bands
 import pandas as pd
 
 class BBSqueezeStrategy(BaseStrategy):

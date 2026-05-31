@@ -1,6 +1,6 @@
-from vega.backend.config import settings
-from vega.backend.utils.logger import logger
-from vega.backend.utils.indicators import atr
+from backend.config import settings
+from backend.utils.logger import logger
+from backend.utils.indicators import atr
 import pandas as pd
 
 class OrderManager:

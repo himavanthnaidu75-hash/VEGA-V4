@@ -1,7 +1,7 @@
 import yfinance as yf
 import pandas as pd
 from datetime import datetime
-from vega.backend.utils.logger import logger
+from backend.utils.logger import logger
 
 class DataFetcher:
     def __init__(self):

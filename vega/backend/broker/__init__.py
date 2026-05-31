@@ -1,4 +1,4 @@
-from vega.backend.config import settings
+from backend.config import settings
 
 def get_broker():
     b = settings.BROKER.lower()

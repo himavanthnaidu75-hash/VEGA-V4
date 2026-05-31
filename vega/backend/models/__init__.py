@@ -1,5 +1,5 @@
 from sqlmodel import create_engine, SQLModel
-from vega.backend.config import settings
+from backend.config import settings
 from .trade import Trade
 from .session import TradingSession
 

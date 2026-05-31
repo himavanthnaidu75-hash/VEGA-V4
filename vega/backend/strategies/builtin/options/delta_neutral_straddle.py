@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import iv_rank, bs_delta
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import iv_rank, bs_delta
 import pandas as pd
 
 class DeltaNeutralStraddleStrategy(BaseStrategy):

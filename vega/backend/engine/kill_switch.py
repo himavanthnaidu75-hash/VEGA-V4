@@ -1,6 +1,6 @@
 import os, signal, asyncio, json
-from vega.backend.utils.logger import logger
-from vega.backend.utils.notifier import notifier
+from backend.utils.logger import logger
+from backend.utils.notifier import notifier
 
 class KillSwitch:
     _instance = None

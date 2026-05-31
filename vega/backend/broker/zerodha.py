@@ -1,4 +1,4 @@
-from vega.backend.broker.base import BrokerInterface, OrderResult, Position, Order, FundSummary
+from backend.broker.base import BrokerInterface, OrderResult, Position, Order, FundSummary
 class ZerodhaBroker(BrokerInterface):
     def connect(self): return False
     def test_connection(self): return {"connected": False}

@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import zscore
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import zscore
 import pandas as pd
 
 class ZScoreReversionStrategy(BaseStrategy):

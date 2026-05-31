@@ -1,5 +1,5 @@
 import pandas as pd
-from vega.backend.utils.indicators import find_swing_highs, find_swing_lows, liquidity_sweep, find_fvg, find_order_blocks
+from backend.utils.indicators import find_swing_highs, find_swing_lows, liquidity_sweep, find_fvg, find_order_blocks
 class ICTConfirmationModel:
     def score(self, d1, d5, d15, d1h, dd, side):
         s = 0; b = {'ms':0,'ls':0,'fvg':0,'ob':0}

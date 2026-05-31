@@ -2,8 +2,8 @@ import requests
 import pandas as pd
 import numpy as np
 from typing import Dict
-from vega.backend.utils.logger import logger
-from vega.backend.utils.indicators import bs_call_price, bs_put_price
+from backend.utils.logger import logger
+from backend.utils.indicators import bs_call_price, bs_put_price
 
 class NSEOptions:
     def __init__(self):

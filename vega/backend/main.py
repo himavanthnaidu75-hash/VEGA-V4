@@ -1,20 +1,20 @@
 import asyncio, json
 from typing import List, Optional
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException, Header
-from vega.backend.config import settings
-from vega.backend.utils.logger import logger
-from vega.backend.utils.notifier import notifier
-from vega.backend.broker import get_broker
-from vega.backend.engine.orchestrator import TradingOrchestrator
-from vega.backend.engine.scheduler import VegaScheduler
-from vega.backend.models import create_db_and_tables, engine as db_engine
-from vega.backend.models.trade import Trade
-from vega.backend.auth import google_router
-from vega.backend.strategies.builtin import get_builtin_strategies
-from vega.backend.strategies.external import get_external_strategies
-from vega.backend.engine.kill_switch import KillSwitch
-from vega.backend.data.live_feed import LiveFeed
-from vega.backend.data.fetcher import fetcher
+from backend.config import settings
+from backend.utils.logger import logger
+from backend.utils.notifier import notifier
+from backend.broker import get_broker
+from backend.engine.orchestrator import TradingOrchestrator
+from backend.engine.scheduler import VegaScheduler
+from backend.models import create_db_and_tables, engine as db_engine
+from backend.models.trade import Trade
+from backend.auth import google_router
+from backend.strategies.builtin import get_builtin_strategies
+from backend.strategies.external import get_external_strategies
+from backend.engine.kill_switch import KillSwitch
+from backend.data.live_feed import LiveFeed
+from backend.data.fetcher import fetcher
 from sqlmodel import Session, select
 from datetime import datetime
 
@@ -37,7 +37,7 @@ scheduler = VegaScheduler(orchestrator)
 kill_sw_inst = KillSwitch(broker, ws_manager=manager)
 feed_inst = LiveFeed(broker, ws_manager=manager)
 
-import vega.backend.engine.kill_switch as ks_mod
+import backend.engine.kill_switch as ks_mod
 ks_mod.kill_switch = kill_sw_inst
 
 @app.on_event("startup")

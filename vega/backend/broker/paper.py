@@ -1,6 +1,6 @@
 import threading, uuid, yfinance as yf, pandas as pd
-from vega.backend.broker.base import BrokerInterface, OrderResult, Position, Order, FundSummary
-from vega.backend.config import settings
+from backend.broker.base import BrokerInterface, OrderResult, Position, Order, FundSummary
+from backend.config import settings
 
 class PaperBroker(BrokerInterface):
     def __init__(self):
@@ -24,6 +24,6 @@ class PaperBroker(BrokerInterface):
     def cancel_order(self, oid): return True
     def modify_order(self, oid, p, q): return True
     def get_ohlcv(self, s, i, f="", t=""):
-        from vega.backend.data.fetcher import fetcher
+        from backend.data.fetcher import fetcher
         return fetcher.get_ohlcv(s, i)
     def subscribe_live_feed(self, s, c): pass

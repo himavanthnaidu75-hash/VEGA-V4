@@ -1,8 +1,8 @@
 import asyncio
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler
-from vega.backend.config import settings
-from vega.backend.utils.logger import logger
+from backend.config import settings
+from backend.utils.logger import logger
 
 class Notifier:
     def __init__(self):

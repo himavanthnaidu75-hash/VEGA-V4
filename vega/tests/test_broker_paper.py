@@ -1,5 +1,5 @@
 import pytest
-from vega.backend.broker.paper import PaperBroker
+from backend.broker.paper import PaperBroker
 
 def test_full_order_lifecycle():
     b = PaperBroker()

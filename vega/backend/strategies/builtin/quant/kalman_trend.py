@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import kalman_filter
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import kalman_filter
 import pandas as pd
 class KalmanFilterTrendStrategy(BaseStrategy):
     def __init__(self): super().__init__("Kalman Trend", "15m", "quant")

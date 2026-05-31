@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Dict
-from vega.backend.data.fetcher import fetcher
-from vega.backend.strategies.confirmation_model import ICTConfirmationModel
+from backend.data.fetcher import fetcher
+from backend.strategies.confirmation_model import ICTConfirmationModel
 
 class Scanner:
     def __init__(self):

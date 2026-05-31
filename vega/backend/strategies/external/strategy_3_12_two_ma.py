@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import sma
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import sma
 import pandas as pd
 class TwoMAStrategy(BaseStrategy):
     def __init__(self, f=50, s=200): super().__init__(f"Two MA ({f}/{s})", "1h", "trend"); self.f, self.s = f, s

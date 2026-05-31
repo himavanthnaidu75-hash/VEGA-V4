@@ -1,5 +1,5 @@
-from vega.backend.strategies.base import BaseStrategy
-from vega.backend.utils.indicators import hurst_exponent
+from backend.strategies.base import BaseStrategy
+from backend.utils.indicators import hurst_exponent
 import pandas as pd
 
 class HurstRegimeSwitcher(BaseStrategy):

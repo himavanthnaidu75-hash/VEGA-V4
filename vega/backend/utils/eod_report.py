@@ -1,5 +1,5 @@
-from vega.backend.utils.notifier import notifier
-from vega.backend.utils.logger import logger
+from backend.utils.notifier import notifier
+from backend.utils.logger import logger
 
 class EODReport:
     async def send(self, session_data):

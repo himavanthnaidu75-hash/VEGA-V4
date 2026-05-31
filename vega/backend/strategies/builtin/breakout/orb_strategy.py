@@ -1,4 +1,4 @@
-from vega.backend.strategies.base import BaseStrategy
+from backend.strategies.base import BaseStrategy
 import pandas as pd
 
 class ORBStrategy(BaseStrategy):
