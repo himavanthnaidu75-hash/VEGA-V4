@@ -12,7 +12,7 @@ import {
   PieChart,
   History
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import api from '../api';
 
 const Tooltip = ({ text }) => (
@@ -63,7 +63,7 @@ const MetricCard = ({ title, value, sub, icon: Icon, color, tooltip, delay = 0 }
 const Analytics = () => {
   const chartRef = useRef();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({ pnl: 4210, winRate: 67, profitFactor: 1.8, drawdown: 2.1 });
+  const [stats, setStats] = useState(null);
   const [performance, setPerformance] = useState([]);
   const [trades, setTrades] = useState([]);
 
@@ -148,6 +148,8 @@ const Analytics = () => {
     );
   }
 
+  const hasData = stats && stats.trades_count > 0;
+
   return (
     <div className="p-10 max-w-[1400px] mx-auto space-y-12 pb-24 selection:bg-primary/20">
       <header className="flex justify-between items-end">
@@ -169,7 +171,7 @@ const Analytics = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <MetricCard
           title="Total Equity"
-          value={`₹${stats.pnl.toLocaleString()}`}
+          value={hasData ? `₹${stats.pnl.toLocaleString()}` : '--'}
           sub="Cumulative System P&L"
           icon={TrendingUp}
           color="text-success"
@@ -178,7 +180,7 @@ const Analytics = () => {
         />
         <MetricCard
           title="Hit Rate"
-          value={`${stats.winRate}%`}
+          value={hasData ? `${stats.winRate}%` : '--'}
           sub="Institutional Confidence"
           icon={Target}
           color="text-primary"
@@ -187,7 +189,7 @@ const Analytics = () => {
         />
         <MetricCard
           title="Profit Factor"
-          value={stats.profitFactor}
+          value={hasData ? stats.profitFactor : '--'}
           sub="Efficiency Multiplier"
           icon={Zap}
           color="text-primary"
@@ -196,7 +198,7 @@ const Analytics = () => {
         />
         <MetricCard
           title="Max Drawdown"
-          value={`-${stats.drawdown}%`}
+          value={hasData ? `-${stats.drawdown}%` : '--'}
           sub="Risk Exposure Peak"
           icon={Activity}
           color="text-danger"
@@ -255,19 +257,22 @@ const Analytics = () => {
                           </tr>
                        </thead>
                        <tbody className="divide-y divide-border/20 text-[11px] font-bold uppercase tracking-tight">
-                          {/* Sample rows for visualization if data is empty but we have some trades */}
-                          <tr className="hover:bg-white/5 transition-colors group">
-                             <td className="py-5 font-syne italic text-text group-hover:text-primary transition-colors">EMA CONFLUENCE</td>
-                             <td className="py-5 text-text-dim">42</td>
-                             <td className="py-5 text-text-dim">71%</td>
-                             <td className="py-5 text-right text-success">+₹12,400</td>
-                          </tr>
-                          <tr className="hover:bg-white/5 transition-colors group">
-                             <td className="py-5 font-syne italic text-text group-hover:text-primary transition-colors">ORB BREAKOUT</td>
-                             <td className="py-5 text-text-dim">18</td>
-                             <td className="py-5 text-text-dim">44%</td>
-                             <td className="py-5 text-right text-danger">-₹2,100</td>
-                          </tr>
+                          {Object.entries(trades.reduce((acc, t) => {
+                             if (!acc[t.strategy_name]) acc[t.strategy_name] = { count: 0, wins: 0, pnl: 0 };
+                             acc[t.strategy_name].count++;
+                             if (t.pnl > 0) acc[t.strategy_name].wins++;
+                             acc[t.strategy_name].pnl += t.pnl || 0;
+                             return acc;
+                          }, {})).map(([name, data]) => (
+                             <tr key={name} className="hover:bg-white/5 transition-colors group">
+                                <td className="py-5 font-syne italic text-text group-hover:text-primary transition-colors">{name.toUpperCase()}</td>
+                                <td className="py-5 text-text-dim">{data.count}</td>
+                                <td className="py-5 text-text-dim">{round((data.wins / data.count) * 100, 1)}%</td>
+                                <td className={`py-5 text-right ${data.pnl >= 0 ? 'text-success' : 'text-danger'}`}>
+                                   {data.pnl >= 0 ? '+' : ''}₹{data.pnl.toLocaleString()}
+                                </td>
+                             </tr>
+                          ))}
                        </tbody>
                     </table>
                  </div>
@@ -323,5 +328,7 @@ const Analytics = () => {
     </div>
   );
 };
+
+const round = (num, d) => Math.round(num * Math.pow(10, d)) / Math.pow(10, d);
 
 export default Analytics;

@@ -134,7 +134,8 @@ def calculate_metrics(trades: List[Trade]):
         "pnl": total_pnl,
         "winRate": round(win_rate, 2),
         "profitFactor": round(profit_factor, 2),
-        "drawdown": round(max_dd, 2)
+        "drawdown": round(max_dd, 2),
+        "trades_count": len(trades)
     }
 
 @app.get("/api/performance")

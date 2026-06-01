@@ -14,7 +14,7 @@ const TradingViewChart = ({ symbol = 'NSE:RELIANCE' }) => {
       interval: '5',
       timezone: 'Asia/Kolkata',
       theme: 'dark',
-      style: '1',                    // candlestick default
+      style: '1',
       locale: 'en',
       toolbar_bg: '#0C0C0E',
       enable_publishing: false,
@@ -22,7 +22,7 @@ const TradingViewChart = ({ symbol = 'NSE:RELIANCE' }) => {
       hide_legend: false,
       save_image: true,
       container_id: 'tradingview_vega',
-      studies: [],                   // no indicators by default — user adds their own
+      studies: [],
       show_popup_button: true,
       popup_width: '1000',
       popup_height: '650',
