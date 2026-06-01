@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /app/vega
+plugins: anyio-4.13.0, asyncio-1.4.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 0 items / 2 errors
+
+==================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_risk_manager.py __________________
+ImportError while importing test module '/app/vega/tests/test_risk_manager.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_risk_manager.py:2: in <module>
+    from vega.backend.engine.risk_manager import RiskManager
+E   ModuleNotFoundError: No module named 'vega'
+______________ ERROR collecting tests/test_confirmation_model.py _______________
+ImportError while importing test module '/app/vega/tests/test_confirmation_model.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/jules/.pyenv/versions/3.12.13/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_confirmation_model.py:3: in <module>
+    from vega.backend.strategies.confirmation_model import ICTConfirmationModel
+E   ModuleNotFoundError: No module named 'vega'
+=========================== short test summary info ============================
+ERROR tests/test_risk_manager.py
+ERROR tests/test_confirmation_model.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 2 errors in 0.63s ===============================
